@@ -1,65 +1,104 @@
-import Image from "next/image";
+// 🎮 DEBUGZONE: THE CYBER ARENA
+// A First-Person Coding Battle Experience
+
+'use client';
+
+import dynamic from 'next/dynamic';
+import { HUD } from '@/components/ui/HUD';
+import { QuizTerminal } from '@/components/ui/QuizTerminal';
+import { VictoryScreen } from '@/components/ui/VictoryScreen';
+import { GameOverScreen } from '@/components/ui/GameOverScreen';
+import { LoadingScreen } from '@/components/ui/LoadingScreen';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { useState, Suspense } from 'react';
+
+// Dynamic import untuk Scene (client-side only)
+const Scene = dynamic(() => import('@/components/3d/Scene').then(mod => ({ default: mod.Scene })), {
+  ssr: false,
+  loading: () => <LoadingScreen />,
+});
 
 export default function Home() {
+  const [showIntro, setShowIntro] = useState(true);
+
+  if (showIntro) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-linear-to-br from-black via-cyan-950 to-black">
+        <div className="max-w-2xl mx-4 text-center space-y-8">
+          {/* Logo */}
+          <div className="space-y-4">
+            <h1 className="text-6xl font-bold font-mono bg-linear-to-r from-cyan-400 via-magenta-400 to-cyan-400 bg-clip-text text-transparent animate-pulse">
+              DEBUGZONE
+            </h1>
+            <p className="text-2xl text-cyan-300 font-mono">The Cyber Arena</p>
+          </div>
+
+          {/* Mission Brief */}
+          <div className="bg-black/70 backdrop-blur-sm border-2 border-cyan-500 rounded-lg p-6 space-y-4 text-left">
+            <h2 className="text-cyan-400 font-mono text-xl font-bold">🎯 MISSION BRIEF</h2>
+            <div className="text-cyan-300 font-mono text-sm space-y-2">
+              <p>
+                You are a <span className="text-magenta-400 font-bold">Code Champion</span> candidate.
+              </p>
+              <p>
+                The mainframe has been infected with <span className="text-red-400 font-bold">Glitches, Bugs, and Viruses</span>.
+              </p>
+              <p>
+                Your weapon: <span className="text-cyan-400 font-bold">Syntax Knowledge</span>.
+              </p>
+              <p className="text-yellow-400 pt-2">
+                ⚠️ Approach enemies to engage in coding battles. Answer correctly to damage them. Wrong answers damage your firewall.
+              </p>
+            </div>
+          </div>
+
+          {/* Objectives */}
+          <div className="bg-black/70 backdrop-blur-sm border border-cyan-500/50 rounded-lg p-4">
+            <h3 className="text-cyan-400 font-mono text-sm font-bold mb-2">OBJECTIVES:</h3>
+            <ul className="text-cyan-300 font-mono text-xs space-y-1 text-left">
+              <li>✅ Eliminate all threats in the cyber arena</li>
+              <li>✅ Protect your firewall integrity (HP)</li>
+              <li>✅ Prove your coding mastery</li>
+            </ul>
+          </div>
+
+          {/* Start Button */}
+          <button
+            onClick={() => setShowIntro(false)}
+            className="px-8 py-4 bg-linear-to-r from-cyan-600 to-magenta-600 hover:from-cyan-500 hover:to-magenta-500 text-white font-mono font-bold text-xl rounded-lg transition-all duration-200 shadow-lg shadow-cyan-500/50 hover:scale-105 animate-pulse"
+          >
+            🚀 ENTER THE ARENA
+          </button>
+
+          {/* Controls */}
+          <div className="bg-cyan-900/30 border border-cyan-500/50 rounded-lg p-4 text-cyan-300 font-mono text-sm">
+            <p className="font-bold mb-2">🎮 CONTROLS:</p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <p>W/A/S/D: Move</p>
+              <p>Mouse: Rotate Camera</p>
+              <p>Space: Jump</p>
+              <p>Scroll: Zoom In/Out</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="fixed inset-0 overflow-hidden">
+      {/* 3D Scene with Error Boundary */}
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingScreen />}>
+          <Scene />
+        </Suspense>
+      </ErrorBoundary>
+
+      {/* UI Overlays */}
+      <HUD />
+      <QuizTerminal />
+      <VictoryScreen />
+      <GameOverScreen />
     </div>
   );
 }
