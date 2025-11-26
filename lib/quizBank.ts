@@ -3,6 +3,182 @@
 
 import { QuizQuestion } from '@/types/game';
 
+// 🔥 TIME ATTACK QUESTIONS (Boss Server Room)
+export const timeAttackQuestions: QuizQuestion[] = [
+  {
+    id: 'time-001',
+    question: 'CEPAT! Apa output dari code ini?',
+    code: `console.log(2 ** 3);`,
+    options: ['6', '8', '23', '9'],
+    correctAnswer: 1,
+    difficulty: 'easy',
+    explanation: '** adalah operator exponential. 2 ** 3 = 2³ = 8',
+    challengeType: 'time-attack',
+    timeLimit: 10,
+  },
+  {
+    id: 'time-002',
+    question: 'CEPAT! Method apa yang menambahkan elemen ke akhir array?',
+    options: ['pop()', 'push()', 'shift()', 'unshift()'],
+    correctAnswer: 1,
+    difficulty: 'easy',
+    explanation: 'push() menambahkan elemen ke akhir array',
+    challengeType: 'time-attack',
+    timeLimit: 8,
+  },
+  {
+    id: 'time-003',
+    question: 'CEPAT! Apa hasil dari 5 % 2?',
+    options: ['2.5', '2', '1', '0'],
+    correctAnswer: 2,
+    difficulty: 'easy',
+    explanation: 'Operator % (modulo) mengembalikan sisa pembagian. 5 % 2 = 1',
+    challengeType: 'time-attack',
+    timeLimit: 7,
+  },
+];
+
+// 🔥 FILL THE BLANK QUESTIONS (Boss Weapon Room)
+export const fillBlankQuestions: QuizQuestion[] = [
+  {
+    id: 'fill-001',
+    question: 'Lengkapi code untuk membuat function arrow:',
+    code: `const add = (a, b) ___ a + b;`,
+    options: ['→', '=>', '->', '::'],
+    correctAnswer: 1,
+    difficulty: 'easy',
+    explanation: 'Arrow function menggunakan => syntax',
+    challengeType: 'fill-blank',
+    blanks: ['=>'],
+  },
+  {
+    id: 'fill-002',
+    question: 'Lengkapi untuk destructure object:',
+    code: `const ___ name, age } = person;`,
+    options: ['(', '[', '{', '<'],
+    correctAnswer: 2,
+    difficulty: 'medium',
+    explanation: 'Destructuring object menggunakan curly braces {}',
+    challengeType: 'fill-blank',
+    blanks: ['{'],
+  },
+  {
+    id: 'fill-003',
+    question: 'Lengkapi async function:',
+    code: `async function getData() {
+  const data = ___ fetch(url);
+}`,
+    options: ['wait', 'await', 'async', 'promise'],
+    correctAnswer: 1,
+    difficulty: 'medium',
+    explanation: 'await digunakan untuk menunggu promise dalam async function',
+    challengeType: 'fill-blank',
+    blanks: ['await'],
+  },
+];
+
+// 🔥 SPEED QUIZ QUESTIONS (Boss Storage Room)
+export const speedQuizQuestions: QuizQuestion[] = [
+  {
+    id: 'speed-001',
+    question: 'TRUE or FALSE: JavaScript adalah bahasa compiled',
+    options: ['TRUE', 'FALSE'],
+    correctAnswer: 1,
+    difficulty: 'easy',
+    explanation: 'JavaScript adalah interpreted language, bukan compiled',
+    challengeType: 'speed-quiz',
+    timeLimit: 5,
+  },
+  {
+    id: 'speed-002',
+    question: 'TRUE or FALSE: === membandingkan nilai dan tipe data',
+    options: ['TRUE', 'FALSE'],
+    correctAnswer: 0,
+    difficulty: 'easy',
+    explanation: '=== melakukan strict equality check (nilai dan tipe)',
+    challengeType: 'speed-quiz',
+    timeLimit: 5,
+  },
+  {
+    id: 'speed-003',
+    question: 'TRUE or FALSE: const variable bisa diubah nilainya',
+    options: ['TRUE', 'FALSE'],
+    correctAnswer: 1,
+    difficulty: 'easy',
+    explanation: 'const tidak bisa di-reassign (tapi object properties bisa diubah)',
+    challengeType: 'speed-quiz',
+    timeLimit: 5,
+  },
+];
+
+// 🔥 CODE DEBUG QUESTIONS (Final Boss)
+export const codeDebugQuestions: QuizQuestion[] = [
+  {
+    id: 'debug-001',
+    question: 'Bug apa yang ada di code ini?',
+    code: `function sum(arr) {
+  let total = 0;
+  for (let i = 0; i <= arr.length; i++) {
+    total += arr[i];
+  }
+  return total;
+}`,
+    options: [
+      'i harus mulai dari 1',
+      'i <= harus jadi i <',
+      'Harus gunakan forEach',
+      'Tidak ada bug',
+    ],
+    correctAnswer: 1,
+    difficulty: 'hard',
+    explanation: 'i <= arr.length akan mengakses index di luar array (undefined), harusnya i < arr.length',
+    challengeType: 'code-debug',
+  },
+  {
+    id: 'debug-002',
+    question: 'Kenapa code ini return undefined?',
+    code: `function getPerson() {
+  return
+    {
+      name: 'John'
+    };
+}`,
+    options: [
+      'Object literal salah',
+      'return dan { harus 1 baris',
+      'Harus gunakan const',
+      'Semicolon hilang',
+    ],
+    correctAnswer: 1,
+    difficulty: 'hard',
+    explanation: 'JavaScript auto-insert semicolon setelah return. { harus di baris yang sama dengan return',
+    challengeType: 'code-debug',
+  },
+  {
+    id: 'debug-003',
+    question: 'Memory leak ada dimana?',
+    code: `function createCounter() {
+  let count = 0;
+  setInterval(() => {
+    count++;
+    console.log(count);
+  }, 1000);
+}
+createCounter();`,
+    options: [
+      'count tidak di-reset',
+      'setInterval tidak di-clear',
+      'console.log terlalu sering',
+      'Tidak ada memory leak',
+    ],
+    correctAnswer: 1,
+    difficulty: 'hard',
+    explanation: 'setInterval terus berjalan tanpa clearInterval, menyebabkan memory leak',
+    challengeType: 'code-debug',
+  },
+];
+
+// Regular quiz bank for non-boss enemies
 export const quizBank: QuizQuestion[] = [
   {
     id: 'q001',

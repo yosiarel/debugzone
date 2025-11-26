@@ -4,6 +4,7 @@
 'use client';
 
 import { useGameStore } from '@/stores/gameStore';
+import { audioManager } from '@/lib/audioManager';
 import { useEffect, useState } from 'react';
 
 export function VictoryScreen() {
@@ -16,6 +17,9 @@ export function VictoryScreen() {
 
   useEffect(() => {
     if (isChampion) {
+      // Play victory sound
+      audioManager.playVictory();
+      
       // Generate confetti particles
       const newParticles = Array.from({ length: 50 }, (_, i) => ({
         id: i,

@@ -1,193 +1,152 @@
-// ⚔️ DEBUGZONE: ENEMY SYSTEM
-// AI-driven Glitches dengan Proximity Detection
-
+// components/3d/Enemy.tsx
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { Mesh, Vector3 } from 'three';
+import { useGLTF, Text, Clone } from '@react-three/drei'; // Import Clone & useGLTF
+import { Mesh, Vector3, Group } from 'three';
 import { useGameStore } from '@/stores/gameStore';
 import { EnemyState } from '@/types/game';
-import { Text } from '@react-three/drei';
+
+// 1. Preload Model supaya tidak lag saat muncul
+useGLTF.preload('/Aliens/Alien_Scolitex.gltf');
+useGLTF.preload('/Aliens/Alien_Cyclop.gltf');
+useGLTF.preload('/Aliens/Alien_Oculichrysalis.gltf');
 
 interface EnemyProps {
   enemy: EnemyState;
 }
 
 export function Enemy({ enemy }: EnemyProps) {
-  const meshRef = useRef<Mesh>(null);
+  const groupRef = useRef<Group>(null);
   const { camera } = useThree();
   const startBattle = useGameStore((state) => state.startBattle);
   const inBattle = useGameStore((state) => state.inBattle);
   const playerPosition = useGameStore((state) => state.player.position);
-  
+
   const [proximityWarning, setProximityWarning] = useState(false);
   const battleTriggered = useRef(false);
 
-  // Floating animation
+  // 2. Pilih Model Berdasarkan Tipe Enemy
+  const modelPath = useMemo(() => {
+    switch (enemy.type) {
+      case 'glitch': return '/Aliens/Alien_Scolitex.gltf';
+      case 'bug': return '/Aliens/Alien_Cyclop.gltf';
+      case 'virus': return '/Aliens/Alien_Oculichrysalis.gltf';
+      default: return '/Aliens/Alien_Scolitex.gltf';
+    }
+  }, [enemy.type]);
+
+  // Load modelnya
+  const { scene } = useGLTF(modelPath);
+
+  // Floating & Logic Loop
   useFrame((state) => {
-    if (!meshRef.current || enemy.isDefeated) return;
+    if (!groupRef.current || enemy.isDefeated) return;
 
-    // Rotate enemy
-    meshRef.current.rotation.y = state.clock.elapsedTime * 0.5;
-    meshRef.current.position.y =
-      enemy.position[1] + Math.sin(state.clock.elapsedTime * 2) * 0.3;
+    // Animasi Melayang (Floating)
+    groupRef.current.position.y = enemy.position[1] + Math.sin(state.clock.elapsedTime * 2) * 0.2;
 
-    // Check distance to player (gunakan player position, bukan camera)
+    // Rotasi pelan
+    groupRef.current.rotation.y += 0.01;
+
+    // Logika Jarak (Sama seperti sebelumnya)
     const enemyPos = new Vector3(...enemy.position);
     const playerPos = new Vector3(...playerPosition);
     const distance = enemyPos.distanceTo(playerPos);
 
-    // Proximity warning (3-5 meters)
     if (distance < 5 && distance > 3 && !enemy.isDefeated) {
       setProximityWarning(true);
     } else {
       setProximityWarning(false);
     }
 
-    // Battle trigger (< 3 meters)
     if (distance < 3 && !battleTriggered.current && !inBattle && !enemy.isDefeated) {
       battleTriggered.current = true;
       startBattle(enemy.id);
     }
 
-    // Reset battle trigger saat jauh
-    if (distance > 5) {
-      battleTriggered.current = false;
-    }
+    if (distance > 5) battleTriggered.current = false;
   });
 
-  if (enemy.isDefeated) {
-    return (
-      <group position={enemy.position}>
-        {/* Defeated effect - scattered particles */}
-        <DefeatedParticles position={enemy.position} />
-      </group>
-    );
-  }
+  if (enemy.isDefeated) return null; // Atau ganti dengan partikel ledakan
 
-  // Get enemy color based on type
-  const getEnemyColor = () => {
-    switch (enemy.type) {
-      case 'glitch':
-        return '#ff0000';
-      case 'bug':
-        return '#ff8800';
-      case 'virus':
-        return '#ff00ff';
-      default:
-        return '#ff0000';
-    }
-  };
-
-  const enemyColor = getEnemyColor();
+  // Warna berdasarkan tipe dan boss status
+  const enemyColor = enemy.type === 'glitch' ? '#ff0000' : enemy.type === 'bug' ? '#ff8800' : '#ff00ff';
+  const scale = enemy.isBoss ? 1.5 : 1; // Boss lebih besar
+  const glowIntensity = enemy.isBoss ? 15 : 8;
 
   return (
-    <group position={enemy.position}>
-      {/* Enemy Body - Geometric Shape */}
-      <mesh ref={meshRef} castShadow>
-        <octahedronGeometry args={[0.8, 0]} />
-        <meshStandardMaterial
-          color={enemyColor}
-          emissive={enemyColor}
-          emissiveIntensity={0.6}
-          roughness={0.3}
-          metalness={0.8}
-          wireframe={proximityWarning}
-        />
-      </mesh>
+    <group ref={groupRef} position={enemy.position}>
 
-      {/* Inner Core */}
-      <mesh>
-        <sphereGeometry args={[0.3, 8, 8]} />
-        <meshBasicMaterial color={enemyColor} />
-      </mesh>
+      {/* Boss Crown/Indicator */}
+      {enemy.isBoss && (
+        <>
+          <mesh position={[0, 3, 0]}>
+            <torusGeometry args={[0.8, 0.1, 16, 32]} />
+            <meshBasicMaterial color="#ffff00" />
+          </mesh>
+          <Text
+            position={[0, 3.5, 0]}
+            fontSize={0.3}
+            color="#ffff00"
+            anchorX="center"
+            anchorY="middle"
+          >
+            👑 BOSS
+          </Text>
+        </>
+      )}
 
-      {/* Glowing Ring */}
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[1, 0.05, 8, 16]} />
-        <meshBasicMaterial color={enemyColor} />
-      </mesh>
+      {/* 3. Render Model 3D Menggunakan <Clone> */}
+      {/* Clone memungkinkan kita menggunakan 1 file model untuk BANYAK musuh tanpa berat */}
+      <group scale={0.5 * scale} position={[0, -0.5, 0]}>
+        <Clone object={scene} />
+      </group>
 
-      {/* Point Light */}
-      <pointLight intensity={5} color={enemyColor} distance={8} />
+      {/* Point Light untuk efek glowing */}
+      <pointLight intensity={glowIntensity} color={enemyColor} distance={enemy.isBoss ? 8 : 3} position={[0, 0.5, 0]} />
 
-      {/* Enemy Type Label */}
+      {/* Label Nama */}
       <Text
-        position={[0, 1.5, 0]}
+        position={[0, 1.8, 0]}
         fontSize={0.3}
         color={enemyColor}
         anchorX="center"
         anchorY="middle"
+        outlineWidth={0.02}
+        outlineColor="#000000"
       >
         {enemy.type.toUpperCase()}
       </Text>
 
-      {/* Health Bar 3D */}
-      <HealthBar3D health={enemy.health} maxHealth={enemy.maxHealth} />
+      {/* Health Bar */}
+      <HealthBar3D health={enemy.health} maxHealth={enemy.maxHealth} color={enemyColor} />
 
-      {/* Proximity Warning */}
+      {/* Proximity Warning Ring */}
       {proximityWarning && (
-        <Text
-          position={[0, 2, 0]}
-          fontSize={0.25}
-          color="#ffff00"
-          anchorX="center"
-          anchorY="middle"
-        >
-          ⚠️ BATTLE ZONE
-        </Text>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]}>
+          <ringGeometry args={[1.5, 1.6, 32]} />
+          <meshBasicMaterial color="red" transparent opacity={0.5} />
+        </mesh>
       )}
     </group>
   );
 }
 
-// 3D Health Bar
-function HealthBar3D({ health, maxHealth }: { health: number; maxHealth: number }) {
+// Komponen HealthBar kecil
+function HealthBar3D({ health, maxHealth, color }: { health: number; maxHealth: number; color: string }) {
   const percentage = health / maxHealth;
-
   return (
-    <group position={[0, -1.2, 0]}>
-      {/* Background */}
-      <mesh position={[0, 0, 0.01]}>
-        <planeGeometry args={[1.5, 0.15]} />
-        <meshBasicMaterial color="#333333" transparent opacity={0.8} />
+    <group position={[0, 1.5, 0]}>
+      <mesh position={[0, 0, -0.01]}>
+        <planeGeometry args={[1.2, 0.15]} />
+        <meshBasicMaterial color="black" />
       </mesh>
-      {/* Health Fill */}
-      <mesh position={[-(1.5 / 2) * (1 - percentage), 0, 0]}>
-        <planeGeometry args={[1.5 * percentage, 0.15]} />
-        <meshBasicMaterial
-          color={percentage > 0.5 ? '#00ff00' : percentage > 0.25 ? '#ffaa00' : '#ff0000'}
-        />
+      <mesh position={[-(1.2 * (1 - percentage)) / 2, 0, 0]}>
+        <planeGeometry args={[1.2 * percentage, 0.1]} />
+        <meshBasicMaterial color={color} />
       </mesh>
-    </group>
-  );
-}
-
-// Defeated Enemy Particles
-function DefeatedParticles({ position }: { position: [number, number, number] }) {
-  return (
-    <group position={position}>
-      {[...Array(20)].map((_, i) => {
-        const angle = (i / 20) * Math.PI * 2;
-        const radius = Math.random() * 2;
-        return (
-          <mesh
-            key={i}
-            position={[
-              Math.cos(angle) * radius,
-              Math.random() * 2,
-              Math.sin(angle) * radius,
-            ]}
-          >
-            <boxGeometry args={[0.1, 0.1, 0.1]} />
-            <meshBasicMaterial color="#00ff00" transparent opacity={0.5} />
-          </mesh>
-        );
-      })}
-      <Text position={[0, 1, 0]} fontSize={0.4} color="#00ff00">
-        DEFEATED
-      </Text>
     </group>
   );
 }

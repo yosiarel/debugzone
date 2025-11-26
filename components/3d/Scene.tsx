@@ -18,38 +18,41 @@ export function Scene() {
 
   return (
     <Canvas
-      shadows
+      shadows="basic"
       camera={{ position: [0, 2, 8], fov: 75 }}
       style={{ background: '#0a0a1e' }}
-      gl={{ antialias: true, alpha: false }}
+      gl={{ 
+        antialias: false, 
+        alpha: false,
+        powerPreference: 'high-performance',
+        stencil: false,
+        depth: true
+      }}
+      dpr={[1, 1.5]}
+      performance={{ min: 0.5 }}
+      frameloop="demand"
     >
       <Physics gravity={[0, -9.81, 0]}>
         {/* Environment */}
         <Level />
 
-        {/* Physics Boundaries (Invisible Walls) */}
-        <RigidBody type="fixed" position={[-25, 2.5, 0]}>
-          <CuboidCollider args={[0.5, 2.5, 25]} />
+        {/* Physics Boundaries (Invisible Walls) - DIPERLUAS UNTUK MULTI-ROOM */}
+        <RigidBody type="fixed" position={[-80, 2.5, 0]}>
+          <CuboidCollider args={[0.5, 2.5, 80]} />
         </RigidBody>
-        <RigidBody type="fixed" position={[25, 2.5, 0]}>
-          <CuboidCollider args={[0.5, 2.5, 25]} />
+        <RigidBody type="fixed" position={[80, 2.5, 0]}>
+          <CuboidCollider args={[0.5, 2.5, 80]} />
         </RigidBody>
-        <RigidBody type="fixed" position={[0, 2.5, -25]}>
-          <CuboidCollider args={[25, 2.5, 0.5]} />
+        <RigidBody type="fixed" position={[0, 2.5, -80]}>
+          <CuboidCollider args={[80, 2.5, 0.5]} />
         </RigidBody>
-        <RigidBody type="fixed" position={[0, 2.5, 25]}>
-          <CuboidCollider args={[25, 2.5, 0.5]} />
+        <RigidBody type="fixed" position={[0, 2.5, 80]}>
+          <CuboidCollider args={[80, 2.5, 0.5]} />
         </RigidBody>
         {/* Floor Collider */}
         <RigidBody type="fixed" position={[0, -0.1, 0]}>
-          <CuboidCollider args={[50, 0.1, 50]} />
+          <CuboidCollider args={[100, 0.1, 100]} />
         </RigidBody>
-
-        {/* Debug: Visible Reference Cube at center */}
-        <mesh position={[0, 1, 0]}>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color="#00ffff" emissive="#00ffff" emissiveIntensity={0.5} />
-        </mesh>
 
         {/* Player */}
         <Player />
@@ -60,25 +63,19 @@ export function Scene() {
         ))}
       </Physics>
 
-      {/* 🎨 POST-PROCESSING EFFECTS */}
-      <EffectComposer>
-        {/* Bloom for Neon Glow */}
+      {/* 🎨 POST-PROCESSING EFFECTS - OPTIMIZED */}
+      <EffectComposer multisampling={0}>
+        {/* Bloom for Neon Glow - Reduced */}
         <Bloom
-          intensity={0.8}
-          luminanceThreshold={0.3}
-          luminanceSmoothing={0.9}
-          mipmapBlur
+          intensity={0.5}
+          luminanceThreshold={0.5}
+          luminanceSmoothing={0.7}
+          height={300}
         />
         {/* Vignette for Cinematic Look */}
         <Vignette
           offset={0.5}
-          darkness={0.3}
-          eskil={false}
-          blendFunction={BlendFunction.NORMAL}
-        />
-        {/* Chromatic Aberration for Cyberpunk Style */}
-        <ChromaticAberration
-          offset={[0.001, 0.001]}
+          darkness={0.2}
           blendFunction={BlendFunction.NORMAL}
         />
       </EffectComposer>
