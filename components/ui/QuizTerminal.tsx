@@ -4,13 +4,14 @@
 'use client';
 
 import { useGameStore } from '@/stores/gameStore';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export function QuizTerminal() {
   const inBattle = useGameStore((state) => state.inBattle);
   const currentQuestion = useGameStore((state) => state.currentQuestion);
   const currentEnemy = useGameStore((state) => state.currentEnemy);
   const answerQuestion = useGameStore((state) => state.answerQuestion);
+  const fleeBattle = useGameStore((state) => state.fleeBattle);
   const enemies = useGameStore((state) => state.enemies);
   const playerHealth = useGameStore((state) => state.player.health);
   const playerMaxHealth = useGameStore((state) => state.player.maxHealth);
@@ -18,6 +19,8 @@ export function QuizTerminal() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Reset state saat battle baru
@@ -25,8 +28,52 @@ export function QuizTerminal() {
       setSelectedAnswer(null);
       setFeedback(null);
       setIsSubmitting(false);
+      
+      // Initialize timer for time-based challenges
+      if (currentQuestion.timeLimit) {
+        setTimeLeft(currentQuestion.timeLimit);
+      } else {
+        setTimeLeft(null);
+      }
     }
   }, [currentQuestion, inBattle]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (timeLeft === null || timeLeft <= 0 || isSubmitting || !inBattle) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev === null || prev <= 1) {
+          // Time's up - auto submit wrong answer
+          if (!isSubmitting && inBattle) {
+            setIsSubmitting(true);
+            setFeedback('wrong');
+            timeoutRef.current = setTimeout(() => {
+              // Reset states sebelum panggil answerQuestion
+              setSelectedAnswer(null);
+              setFeedback(null);
+              setIsSubmitting(false);
+              answerQuestion(false);
+              timeoutRef.current = null;
+            }, 1500);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft, isSubmitting, inBattle, answerQuestion]);
+
+  // Cleanup timeouts when battle ends (flee or defeat)
+  useEffect(() => {
+    if (!inBattle && timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, [inBattle]);
 
   if (!inBattle || !currentQuestion || !currentEnemy) return null;
 
@@ -39,9 +86,13 @@ export function QuizTerminal() {
     const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
     setFeedback(isCorrect ? 'correct' : 'wrong');
 
-    setTimeout(() => {
-      answerQuestion(isCorrect);
+    timeoutRef.current = setTimeout(() => {
+      // Reset states sebelum panggil answerQuestion
+      setSelectedAnswer(null);
+      setFeedback(null);
       setIsSubmitting(false);
+      answerQuestion(isCorrect);
+      timeoutRef.current = null;
     }, 1500);
   };
 
@@ -86,9 +137,29 @@ export function QuizTerminal() {
               </div>
             </div>
             <div className="text-right">
+              {/* Challenge Type Badge */}
+              {enemy?.isBoss && enemy.challengeType && (
+                <div className="mb-2 px-3 py-1 bg-yellow-500/20 border border-yellow-500 rounded-full inline-block">
+                  <span className="text-yellow-400 text-xs font-bold font-mono">
+                    🔥 {enemy.challengeType.toUpperCase()}
+                  </span>
+                </div>
+              )}
               <div className="text-magenta-400 text-sm font-mono">
                 Difficulty: <span className="text-magenta-300 font-bold">{currentQuestion.difficulty.toUpperCase()}</span>
               </div>
+              {/* Timer Display */}
+              {timeLeft !== null && (
+                <div className="mt-2">
+                  <div className={`text-2xl font-bold font-mono ${
+                    timeLeft <= 3 ? 'text-red-500 animate-pulse' : 
+                    timeLeft <= 5 ? 'text-yellow-500' : 
+                    'text-cyan-400'
+                  }`}>
+                    ⏱️ {timeLeft}s
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -155,6 +226,19 @@ export function QuizTerminal() {
             }`}
           >
             {isSubmitting ? 'PROCESSING...' : 'EXECUTE ATTACK'}
+          </button>
+
+          {/* Flee Button */}
+          <button
+            onClick={fleeBattle}
+            disabled={isSubmitting}
+            className={`w-full mt-3 py-3 rounded-lg font-mono font-bold text-sm transition-all duration-200 ${
+              !isSubmitting
+                ? 'bg-red-900/50 border-2 border-red-500 hover:bg-red-800/50 text-red-300 cursor-pointer'
+                : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            ⚠️ RETREAT (-50 HP PENALTY)
           </button>
         </div>
       </div>

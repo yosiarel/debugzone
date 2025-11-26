@@ -145,7 +145,7 @@ export function Player() {
       {/* Player Physics Body & Visual */}
       <RigidBody
         ref={playerRef}
-        position={[0, 2, 5]}
+        position={[0, 2, 0]}
         enabledRotations={[false, false, false]}
         linearDamping={2}
         angularDamping={1}

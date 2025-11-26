@@ -71,20 +71,41 @@ export function Enemy({ enemy }: EnemyProps) {
 
   if (enemy.isDefeated) return null; // Atau ganti dengan partikel ledakan
 
-  // Warna Teks Label
+  // Warna berdasarkan tipe dan boss status
   const enemyColor = enemy.type === 'glitch' ? '#ff0000' : enemy.type === 'bug' ? '#ff8800' : '#ff00ff';
+  const scale = enemy.isBoss ? 1.5 : 1; // Boss lebih besar
+  const glowIntensity = enemy.isBoss ? 15 : 8;
 
   return (
     <group ref={groupRef} position={enemy.position}>
 
+      {/* Boss Crown/Indicator */}
+      {enemy.isBoss && (
+        <>
+          <mesh position={[0, 3, 0]}>
+            <torusGeometry args={[0.8, 0.1, 16, 32]} />
+            <meshBasicMaterial color="#ffff00" />
+          </mesh>
+          <Text
+            position={[0, 3.5, 0]}
+            fontSize={0.3}
+            color="#ffff00"
+            anchorX="center"
+            anchorY="middle"
+          >
+            👑 BOSS
+          </Text>
+        </>
+      )}
+
       {/* 3. Render Model 3D Menggunakan <Clone> */}
       {/* Clone memungkinkan kita menggunakan 1 file model untuk BANYAK musuh tanpa berat */}
-      <group scale={0.5} position={[0, -0.5, 0]}>
+      <group scale={0.5 * scale} position={[0, -0.5, 0]}>
         <Clone object={scene} />
       </group>
 
       {/* Point Light untuk efek glowing */}
-      <pointLight intensity={2} color={enemyColor} distance={3} position={[0, 0.5, 0]} />
+      <pointLight intensity={glowIntensity} color={enemyColor} distance={enemy.isBoss ? 8 : 3} position={[0, 0.5, 0]} />
 
       {/* Label Nama */}
       <Text

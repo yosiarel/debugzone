@@ -3,42 +3,139 @@
 
 import { create } from 'zustand';
 import { GameState, EnemyState, QuizQuestion } from '@/types/game';
-import { quizBank } from '@/lib/quizBank';
+import { 
+  quizBank, 
+  timeAttackQuestions, 
+  fillBlankQuestions, 
+  speedQuizQuestions, 
+  codeDebugQuestions 
+} from '@/lib/quizBank';
 
 export const useGameStore = create<GameState>((set, get) => ({
   // Initial Player State
   player: {
     health: 100,
     maxHealth: 100,
-    position: [0, 1, 5],
+    position: [0, 1, 0],
     isLocked: false,
   },
 
-  // Initial Enemies (Will be populated)
+  // Initial Enemies (Spread across different rooms)
   enemies: [
+    // Server Room (North) - Boss + Enemies
     {
-      id: 'glitch-001',
+      id: 'boss-server',
+      health: 100,
+      maxHealth: 100,
+      position: [0, 0.5, -56],
+      isDefeated: false,
+      type: 'virus',
+      isBoss: true,
+      challengeType: 'time-attack',
+      powerUp: 'time-freeze',
+    },
+    {
+      id: 'server-enemy-1',
       health: 50,
       maxHealth: 50,
-      position: [10, 0.5, 10],
+      position: [-8, 0.5, -52],
       isDefeated: false,
       type: 'glitch',
     },
     {
-      id: 'bug-002',
-      health: 75,
-      maxHealth: 75,
-      position: [-12, 0.5, 15],
+      id: 'server-enemy-2',
+      health: 50,
+      maxHealth: 50,
+      position: [8, 0.5, -60],
+      isDefeated: false,
+      type: 'bug',
+    },
+    
+    // Weapon Room (South) - Boss + Enemies
+    {
+      id: 'boss-weapon',
+      health: 100,
+      maxHealth: 100,
+      position: [0, 0.5, 50],
+      isDefeated: false,
+      type: 'bug',
+      isBoss: true,
+      challengeType: 'fill-blank',
+      powerUp: 'double-damage',
+    },
+    {
+      id: 'weapon-enemy-1',
+      health: 50,
+      maxHealth: 50,
+      position: [-10, 0.5, 54],
+      isDefeated: false,
+      type: 'virus',
+    },
+    {
+      id: 'weapon-enemy-2',
+      health: 50,
+      maxHealth: 50,
+      position: [10, 0.5, 46],
+      isDefeated: false,
+      type: 'glitch',
+    },
+    
+    // Storage Room (West) - Boss + Enemies
+    {
+      id: 'boss-storage',
+      health: 100,
+      maxHealth: 100,
+      position: [-56, 0.5, 0],
+      isDefeated: false,
+      type: 'glitch',
+      isBoss: true,
+      challengeType: 'speed-quiz',
+      powerUp: 'shield',
+    },
+    {
+      id: 'storage-enemy-1',
+      health: 50,
+      maxHealth: 50,
+      position: [-60, 0.5, -8],
       isDefeated: false,
       type: 'bug',
     },
     {
-      id: 'virus-003',
-      health: 100,
-      maxHealth: 100,
-      position: [0, 0.5, -20],
+      id: 'storage-enemy-2',
+      health: 50,
+      maxHealth: 50,
+      position: [-52, 0.5, 8],
       isDefeated: false,
       type: 'virus',
+    },
+    
+    // Boss Room (East) - Final Boss + Elite Enemies
+    {
+      id: 'boss-final',
+      health: 150,
+      maxHealth: 150,
+      position: [64, 0.5, 0],
+      isDefeated: false,
+      type: 'virus',
+      isBoss: true,
+      challengeType: 'code-debug',
+      powerUp: 'mega-heal',
+    },
+    {
+      id: 'final-enemy-1',
+      health: 75,
+      maxHealth: 75,
+      position: [56, 0.5, -8],
+      isDefeated: false,
+      type: 'glitch',
+    },
+    {
+      id: 'final-enemy-2',
+      health: 75,
+      maxHealth: 75,
+      position: [72, 0.5, 8],
+      isDefeated: false,
+      type: 'bug',
     },
   ],
 
@@ -51,6 +148,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   score: 0,
   enemiesDefeated: 0,
   isChampion: false,
+
+  // Power-ups
+  powerUps: [],
 
   // 🔥 ACTIONS
 
@@ -105,7 +205,37 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   startBattle: (enemyId: string) => {
-    const question = quizBank[Math.floor(Math.random() * quizBank.length)];
+    const state = get();
+    const enemy = state.enemies.find((e) => e.id === enemyId);
+    
+    // Debug log - pastikan HP musuh tidak di-reset saat re-engage
+    console.log('⚔️ STARTING BATTLE:', {
+      enemyId,
+      enemyHP: enemy?.health,
+      enemyMaxHP: enemy?.maxHealth,
+      isDefeated: enemy?.isDefeated,
+    });
+    
+    // Select question bank based on boss challenge type
+    let questionBank = quizBank;
+    if (enemy?.isBoss && enemy.challengeType) {
+      switch (enemy.challengeType) {
+        case 'time-attack':
+          questionBank = timeAttackQuestions;
+          break;
+        case 'fill-blank':
+          questionBank = fillBlankQuestions;
+          break;
+        case 'speed-quiz':
+          questionBank = speedQuizQuestions;
+          break;
+        case 'code-debug':
+          questionBank = codeDebugQuestions;
+          break;
+      }
+    }
+    
+    const question = questionBank[Math.floor(Math.random() * questionBank.length)];
     set({
       inBattle: true,
       currentEnemy: enemyId,
@@ -120,6 +250,33 @@ export const useGameStore = create<GameState>((set, get) => ({
       currentEnemy: null,
       currentQuestion: null,
       player: { ...get().player, isLocked: false },
+    });
+  },
+
+  fleeBattle: () => {
+    const state = get();
+    const currentEnemyData = state.enemies.find(e => e.id === state.currentEnemy);
+    
+    // Debug log - pastikan HP musuh tidak berubah
+    console.log('🏃 FLEEING BATTLE:', {
+      enemyId: state.currentEnemy,
+      enemyHP: currentEnemyData?.health,
+      enemyMaxHP: currentEnemyData?.maxHealth,
+      playerHP: state.player.health,
+    });
+    
+    // Apply penalty: -50 HP (karena kabur/nyerah)
+    const newPlayerHealth = Math.max(0, state.player.health - 50);
+    
+    // IMPORTANT: When fleeing, we DON'T reset enemy HP
+    // The enemy's current health is already saved in the enemies array
+    // We just end the battle state and reduce player HP as penalty
+    
+    set({
+      inBattle: false,
+      currentEnemy: null,
+      currentQuestion: null,
+      player: { ...state.player, health: newPlayerHealth, isLocked: false },
     });
   },
 
@@ -138,13 +295,86 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Load next question atau end battle
     const enemy = state.enemies.find((e) => e.id === state.currentEnemy);
     if (enemy && enemy.health > 0 && state.player.health > 0) {
-      // Continue battle dengan soal baru
-      const newQuestion = quizBank[Math.floor(Math.random() * quizBank.length)];
+      // Continue battle dengan soal baru - use appropriate question bank
+      let questionBank = quizBank;
+      if (enemy.isBoss && enemy.challengeType) {
+        switch (enemy.challengeType) {
+          case 'time-attack':
+            questionBank = timeAttackQuestions;
+            break;
+          case 'fill-blank':
+            questionBank = fillBlankQuestions;
+            break;
+          case 'speed-quiz':
+            questionBank = speedQuizQuestions;
+            break;
+          case 'code-debug':
+            questionBank = codeDebugQuestions;
+            break;
+        }
+      }
+      
+      // Pastikan pertanyaan baru berbeda dari yang sekarang
+      let newQuestion = questionBank[Math.floor(Math.random() * questionBank.length)];
+      let attempts = 0;
+      while (newQuestion.question === state.currentQuestion?.question && attempts < 10) {
+        newQuestion = questionBank[Math.floor(Math.random() * questionBank.length)];
+        attempts++;
+      }
+      
       set({ currentQuestion: newQuestion });
     } else {
-      // Battle selesai
+      // Battle selesai - Check if boss defeated for power-up
+      if (enemy && enemy.isDefeated && enemy.isBoss && enemy.powerUp) {
+        state.addPowerUp({
+          type: enemy.powerUp,
+          name: enemy.powerUp.toUpperCase(),
+          description: `Power-up from ${enemy.id}`,
+          used: false,
+        });
+      }
       state.endBattle();
     }
+  },
+
+  usePowerUp: (type) => {
+    set((state) => {
+      const powerUp = state.powerUps.find((p) => p.type === type && !p.used);
+      if (!powerUp) return state;
+
+      // Apply power-up effects
+      let updates: any = {
+        powerUps: state.powerUps.map((p) =>
+          p.type === type && !p.used ? { ...p, used: true } : p
+        ),
+      };
+
+      switch (type) {
+        case 'shield':
+          // Shield absorbs next damage
+          break;
+        case 'double-damage':
+          // Next attack deals 2x damage
+          break;
+        case 'time-freeze':
+          // Freeze timer for current question
+          break;
+        case 'mega-heal':
+          updates.player = {
+            ...state.player,
+            health: Math.min(state.player.maxHealth, state.player.health + 50),
+          };
+          break;
+      }
+
+      return updates;
+    });
+  },
+
+  addPowerUp: (powerUp) => {
+    set((state) => ({
+      powerUps: [...state.powerUps, powerUp],
+    }));
   },
 
   resetGame: () => {
@@ -152,34 +382,22 @@ export const useGameStore = create<GameState>((set, get) => ({
       player: {
         health: 100,
         maxHealth: 100,
-        position: [0, 1, 5],
+        position: [0, 1, 0],
         isLocked: false,
       },
       enemies: [
-        {
-          id: 'glitch-001',
-          health: 50,
-          maxHealth: 50,
-          position: [10, 0.5, 10],
-          isDefeated: false,
-          type: 'glitch',
-        },
-        {
-          id: 'bug-002',
-          health: 75,
-          maxHealth: 75,
-          position: [-12, 0.5, 15],
-          isDefeated: false,
-          type: 'bug',
-        },
-        {
-          id: 'virus-003',
-          health: 100,
-          maxHealth: 100,
-          position: [0, 0.5, -20],
-          isDefeated: false,
-          type: 'virus',
-        },
+        { id: 'boss-server', health: 100, maxHealth: 100, position: [0, 0.5, -56], isDefeated: false, type: 'virus', isBoss: true, challengeType: 'time-attack', powerUp: 'time-freeze' },
+        { id: 'server-enemy-1', health: 50, maxHealth: 50, position: [-8, 0.5, -52], isDefeated: false, type: 'glitch' },
+        { id: 'server-enemy-2', health: 50, maxHealth: 50, position: [8, 0.5, -60], isDefeated: false, type: 'bug' },
+        { id: 'boss-weapon', health: 100, maxHealth: 100, position: [0, 0.5, 50], isDefeated: false, type: 'bug', isBoss: true, challengeType: 'fill-blank', powerUp: 'double-damage' },
+        { id: 'weapon-enemy-1', health: 50, maxHealth: 50, position: [-10, 0.5, 54], isDefeated: false, type: 'virus' },
+        { id: 'weapon-enemy-2', health: 50, maxHealth: 50, position: [10, 0.5, 46], isDefeated: false, type: 'glitch' },
+        { id: 'boss-storage', health: 100, maxHealth: 100, position: [-56, 0.5, 0], isDefeated: false, type: 'glitch', isBoss: true, challengeType: 'speed-quiz', powerUp: 'shield' },
+        { id: 'storage-enemy-1', health: 50, maxHealth: 50, position: [-60, 0.5, -8], isDefeated: false, type: 'bug' },
+        { id: 'storage-enemy-2', health: 50, maxHealth: 50, position: [-52, 0.5, 8], isDefeated: false, type: 'virus' },
+        { id: 'boss-final', health: 150, maxHealth: 150, position: [64, 0.5, 0], isDefeated: false, type: 'virus', isBoss: true, challengeType: 'code-debug', powerUp: 'mega-heal' },
+        { id: 'final-enemy-1', health: 75, maxHealth: 75, position: [56, 0.5, -8], isDefeated: false, type: 'glitch' },
+        { id: 'final-enemy-2', health: 75, maxHealth: 75, position: [72, 0.5, 8], isDefeated: false, type: 'bug' },
       ],
       inBattle: false,
       currentEnemy: null,
@@ -187,6 +405,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       score: 0,
       enemiesDefeated: 0,
       isChampion: false,
+      powerUps: [],
     });
   },
 }));

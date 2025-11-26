@@ -10,6 +10,8 @@ import { VictoryScreen } from '@/components/ui/VictoryScreen';
 import { GameOverScreen } from '@/components/ui/GameOverScreen';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { PowerUpDisplay } from '@/components/ui/PowerUpDisplay';
+import { TrainingTerminal } from '@/components/ui/TrainingTerminal';
 import { useState, Suspense } from 'react';
 
 // Dynamic import untuk Scene (client-side only)
@@ -56,10 +58,34 @@ export default function Home() {
           <div className="bg-black/70 backdrop-blur-sm border border-cyan-500/50 rounded-lg p-4">
             <h3 className="text-cyan-400 font-mono text-sm font-bold mb-2">OBJECTIVES:</h3>
             <ul className="text-cyan-300 font-mono text-xs space-y-1 text-left">
-              <li>✅ Eliminate all threats in the cyber arena</li>
+              <li>✅ Explore 4 connected rooms through winding corridors</li>
+              <li>✅ Defeat 4 Boss enemies with unique challenges</li>
+              <li>✅ Collect power-ups from defeated bosses</li>
               <li>✅ Protect your firewall integrity (HP)</li>
-              <li>✅ Prove your coding mastery</li>
             </ul>
+          </div>
+
+          {/* Boss Challenges */}
+          <div className="bg-black/70 backdrop-blur-sm border border-yellow-500/50 rounded-lg p-4">
+            <h3 className="text-yellow-400 font-mono text-sm font-bold mb-2">👑 BOSS CHALLENGES:</h3>
+            <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+              <div className="text-left">
+                <p className="text-cyan-400">🔥 Server Room:</p>
+                <p className="text-cyan-300">TIME ATTACK</p>
+              </div>
+              <div className="text-left">
+                <p className="text-red-400">🔥 Weapon Room:</p>
+                <p className="text-red-300">FILL THE BLANK</p>
+              </div>
+              <div className="text-left">
+                <p className="text-green-400">🔥 Storage Room:</p>
+                <p className="text-green-300">SPEED QUIZ</p>
+              </div>
+              <div className="text-left">
+                <p className="text-magenta-400">🔥 Boss Room:</p>
+                <p className="text-magenta-300">CODE DEBUG</p>
+              </div>
+            </div>
           </div>
 
           {/* Start Button */}
@@ -97,6 +123,8 @@ export default function Home() {
       {/* UI Overlays */}
       <HUD />
       <QuizTerminal />
+      <PowerUpDisplay />
+      <TrainingTerminal />
       <VictoryScreen />
       <GameOverScreen />
     </div>
