@@ -9,6 +9,7 @@ import { OrbitControls } from '@react-three/drei';
 import { RigidBody, CapsuleCollider } from '@react-three/rapier';
 import { Vector3, Euler } from 'three';
 import { useGameStore } from '@/stores/gameStore';
+import { audioManager } from '@/lib/audioManager';
 
 const MOVE_SPEED = 8;
 const JUMP_FORCE = 6;
@@ -25,10 +26,19 @@ export function Player() {
   // Keyboard state
   const keysPressed = useRef<{ [key: string]: boolean }>({});
   const canJump = useRef(true);
+  const audioInitialized = useRef(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       keysPressed.current[e.code] = true;
+      
+      // Initialize and start exploration music on first key press
+      if (!audioInitialized.current) {
+        audioManager.initializeAudio().then(() => {
+          audioManager.playExplore();
+        });
+        audioInitialized.current = true;
+      }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -112,6 +122,10 @@ export function Player() {
         y: JUMP_FORCE,
         z: currentVelocity.z,
       }, true);
+      
+      // Play jump sound
+      audioManager.playJump();
+      
       canJump.current = false;
       setTimeout(() => {
         canJump.current = true;

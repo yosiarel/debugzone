@@ -4,12 +4,21 @@
 'use client';
 
 import { useGameStore } from '@/stores/gameStore';
+import { audioManager } from '@/lib/audioManager';
+import { useEffect } from 'react';
 
 export function GameOverScreen() {
   const playerHealth = useGameStore((state) => state.player.health);
   const resetGame = useGameStore((state) => state.resetGame);
   const score = useGameStore((state) => state.score);
   const enemiesDefeated = useGameStore((state) => state.enemiesDefeated);
+
+  useEffect(() => {
+    if (playerHealth <= 0) {
+      // Play lost sound when player dies
+      audioManager.playLost();
+    }
+  }, [playerHealth]);
 
   if (playerHealth > 0) return null;
 

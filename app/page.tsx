@@ -67,23 +67,23 @@ export default function Home() {
 
           {/* Boss Challenges */}
           <div className="bg-black/70 backdrop-blur-sm border border-yellow-500/50 rounded-lg p-4">
-            <h3 className="text-yellow-400 font-mono text-sm font-bold mb-2">👑 BOSS CHALLENGES:</h3>
-            <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-              <div className="text-left">
+            <h3 className="text-yellow-400 font-mono text-sm font-bold mb-3 text-center">👑 BOSS CHALLENGES:</h3>
+            <div className="grid grid-cols-2 gap-4 text-xs font-mono">
+              <div className="flex flex-col items-center text-center">
                 <p className="text-cyan-400">🔥 Server Room:</p>
-                <p className="text-cyan-300">TIME ATTACK</p>
+                <p className="text-cyan-300 font-bold">TIME ATTACK</p>
               </div>
-              <div className="text-left">
+              <div className="flex flex-col items-center text-center">
                 <p className="text-red-400">🔥 Weapon Room:</p>
-                <p className="text-red-300">FILL THE BLANK</p>
+                <p className="text-red-300 font-bold">FILL THE BLANK</p>
               </div>
-              <div className="text-left">
+              <div className="flex flex-col items-center text-center">
                 <p className="text-green-400">🔥 Storage Room:</p>
-                <p className="text-green-300">SPEED QUIZ</p>
+                <p className="text-green-300 font-bold">SPEED QUIZ</p>
               </div>
-              <div className="text-left">
+              <div className="flex flex-col items-center text-center">
                 <p className="text-magenta-400">🔥 Boss Room:</p>
-                <p className="text-magenta-300">CODE DEBUG</p>
+                <p className="text-magenta-300 font-bold">CODE DEBUG</p>
               </div>
             </div>
           </div>

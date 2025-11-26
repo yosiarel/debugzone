@@ -20,7 +20,7 @@ export interface EnemyState {
   powerUp?: PowerUpType;
 }
 
-export type PowerUpType = 'shield' | 'double-damage' | 'time-freeze' | 'mega-heal';
+export type PowerUpType = 'shield' | 'double-damage' | 'vanish-options' | 'mega-heal';
 
 export interface PowerUp {
   type: PowerUpType;
@@ -61,6 +61,8 @@ export interface GameState {
   
   // Power-ups
   powerUps: PowerUp[];
+  activeShield: boolean;
+  activeDoubleDamage: boolean;
   
   // Actions
   setPlayerPosition: (position: [number, number, number]) => void;

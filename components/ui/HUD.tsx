@@ -5,14 +5,23 @@
 
 import { useGameStore } from '@/stores/gameStore';
 import { useEffect, useState } from 'react';
+import { audioManager } from '@/lib/audioManager';
 
 export function HUD() {
   const player = useGameStore((state) => state.player);
   const score = useGameStore((state) => state.score);
   const enemiesDefeated = useGameStore((state) => state.enemiesDefeated);
   const enemies = useGameStore((state) => state.enemies);
+  const activeShield = useGameStore((state) => state.activeShield);
+  const activeDoubleDamage = useGameStore((state) => state.activeDoubleDamage);
   
   const [glitchEffect, setGlitchEffect] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+
+  const handleToggleMute = () => {
+    const newMuteState = audioManager.toggleMute();
+    setIsMuted(newMuteState);
+  };
 
   // Glitch effect saat health rendah
   useEffect(() => {
@@ -65,27 +74,65 @@ export function HUD() {
       </div>
 
       {/* Top Right - Mission Status */}
-      <div className="absolute top-6 right-6">
+      <div className="absolute top-6 right-6 space-y-4">
         <div className="bg-black/70 backdrop-blur-sm border border-magenta-500/50 p-4 rounded-lg">
           <div className="text-magenta-400 text-xs font-mono mb-2">MISSION STATUS</div>
           <div className="text-magenta-300 text-xl font-bold font-mono">
             {enemiesDefeated} / {totalEnemies} THREATS ELIMINATED
           </div>
-          <div className="mt-2 flex gap-2">
+          <div className="mt-2 flex flex-wrap gap-2 items-center">
             {enemies.map((enemy) => (
               <div
                 key={enemy.id}
-                className={`w-3 h-3 rounded-full ${
-                  enemy.isDefeated ? 'bg-green-500' : 'bg-red-500 animate-pulse'
-                }`}
-              ></div>
+                className="flex items-center justify-center"
+                title={enemy.isBoss ? (enemy.isDefeated ? 'Boss Defeated' : 'Boss Active') : (enemy.isDefeated ? 'Enemy Defeated' : 'Enemy Active')}
+              >
+                {enemy.isBoss ? (
+                  // Boss icon - crown
+                  <div className={`text-base leading-none ${
+                    enemy.isDefeated 
+                      ? 'text-yellow-500 opacity-50' 
+                      : 'text-yellow-400 animate-pulse drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]'
+                  }`}>
+                    👑
+                  </div>
+                ) : (
+                  // Regular enemy - dot
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      enemy.isDefeated ? 'bg-green-500' : 'bg-red-500 animate-pulse'
+                    }`}
+                  ></div>
+                )}
+              </div>
             ))}
           </div>
         </div>
+        
+        {/* Active Effects */}
+        {(activeShield || activeDoubleDamage) && (
+          <div className="bg-black/70 backdrop-blur-sm border border-cyan-500/50 p-4 rounded-lg">
+            <div className="text-cyan-400 text-xs font-mono mb-2">ACTIVE EFFECTS</div>
+            <div className="space-y-2">
+              {activeShield && (
+                <div className="flex items-center gap-2 text-cyan-300 font-mono text-sm animate-pulse">
+                  <span className="text-xl">🛡️</span>
+                  <span className="font-bold">SHIELD ACTIVE</span>
+                </div>
+              )}
+              {activeDoubleDamage && (
+                <div className="flex items-center gap-2 text-red-300 font-mono text-sm animate-pulse">
+                  <span className="text-xl">⚔️</span>
+                  <span className="font-bold">2X DAMAGE</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Bottom - Controls Hint */}
-      <div className="absolute bottom-6 left-6">
+      {/* Bottom Left - Controls Hint */}
+      <div className="absolute bottom-6 left-6 space-y-3">
         <div className="bg-black/70 backdrop-blur-sm border border-cyan-500/30 p-3 rounded-lg">
           <div className="text-cyan-400 text-xs font-mono space-y-1">
             <div className="flex gap-3">
@@ -102,6 +149,19 @@ export function HUD() {
             </div>
           </div>
         </div>
+
+        {/* Audio Control */}
+        <button
+          onClick={handleToggleMute}
+          className="bg-black/70 backdrop-blur-sm border border-cyan-500/50 p-3 rounded-lg hover:bg-cyan-900/30 transition-all pointer-events-auto"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">{isMuted ? '🔇' : '🔊'}</span>
+            <span className="text-cyan-400 text-xs font-mono font-bold">
+              {isMuted ? 'UNMUTE' : 'MUTE'}
+            </span>
+          </div>
+        </button>
       </div>
 
       {/* Vignette Effect saat health rendah */}

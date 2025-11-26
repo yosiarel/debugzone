@@ -10,6 +10,7 @@ import {
   speedQuizQuestions, 
   codeDebugQuestions 
 } from '@/lib/quizBank';
+import { audioManager } from '@/lib/audioManager';
 
 export const useGameStore = create<GameState>((set, get) => ({
   // Initial Player State
@@ -32,7 +33,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       type: 'virus',
       isBoss: true,
       challengeType: 'time-attack',
-      powerUp: 'time-freeze',
+      powerUp: 'vanish-options',
     },
     {
       id: 'server-enemy-1',
@@ -151,6 +152,8 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   // Power-ups
   powerUps: [],
+  activeShield: false,
+  activeDoubleDamage: false,
 
   // 🔥 ACTIONS
 
@@ -162,6 +165,19 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   damagePlayer: (amount: number) => {
     set((state) => {
+      // Check if shield is active
+      if (state.activeShield) {
+        console.log('🛡️ SHIELD BLOCKED DAMAGE!');
+        // Shield absorbs damage, mark as used and deactivate
+        const updatedPowerUps = state.powerUps.map(p => 
+          p.type === 'shield' && !p.used ? { ...p, used: true } : p
+        );
+        return {
+          activeShield: false,
+          powerUps: updatedPowerUps,
+        };
+      }
+      
       const newHealth = Math.max(0, state.player.health - amount);
       return {
         player: { ...state.player, health: newHealth },
@@ -216,6 +232,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       isDefeated: enemy?.isDefeated,
     });
     
+    // Play battle music
+    audioManager.playBattle();
+    
     // Select question bank based on boss challenge type
     let questionBank = quizBank;
     if (enemy?.isBoss && enemy.challengeType) {
@@ -245,6 +264,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   endBattle: () => {
+    // Return to exploration music
+    audioManager.playExplore();
+    
     set({
       inBattle: false,
       currentEnemy: null,
@@ -268,6 +290,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Apply penalty: -50 HP (karena kabur/nyerah)
     const newPlayerHealth = Math.max(0, state.player.health - 50);
     
+    // Return to exploration music
+    audioManager.playExplore();
+    
     // IMPORTANT: When fleeing, we DON'T reset enemy HP
     // The enemy's current health is already saved in the enemies array
     // We just end the battle state and reduce player HP as penalty
@@ -285,16 +310,31 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!state.currentEnemy) return;
 
     if (isCorrect) {
-      // Critical Hit ke Enemy
-      state.damageEnemy(state.currentEnemy, 25);
+      // Critical Hit ke Enemy - check for double damage
+      const damage = state.activeDoubleDamage ? 50 : 25;
+      if (state.activeDoubleDamage) {
+        console.log('⚔️ DOUBLE DAMAGE ACTIVATED!');
+        // Mark double-damage as used and deactivate
+        const updatedPowerUps = state.powerUps.map(p => 
+          p.type === 'double-damage' && !p.used ? { ...p, used: true } : p
+        );
+        set({ 
+          activeDoubleDamage: false,
+          powerUps: updatedPowerUps,
+        });
+      }
+      state.damageEnemy(state.currentEnemy, damage);
     } else {
       // Firewall pemain ditembus
       state.damagePlayer(15);
     }
 
+    // Get fresh state after damage
+    const freshState = get();
+    
     // Load next question atau end battle
-    const enemy = state.enemies.find((e) => e.id === state.currentEnemy);
-    if (enemy && enemy.health > 0 && state.player.health > 0) {
+    const enemy = freshState.enemies.find((e) => e.id === freshState.currentEnemy);
+    if (enemy && enemy.health > 0 && freshState.player.health > 0) {
       // Continue battle dengan soal baru - use appropriate question bank
       let questionBank = quizBank;
       if (enemy.isBoss && enemy.challengeType) {
@@ -317,7 +357,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       // Pastikan pertanyaan baru berbeda dari yang sekarang
       let newQuestion = questionBank[Math.floor(Math.random() * questionBank.length)];
       let attempts = 0;
-      while (newQuestion.question === state.currentQuestion?.question && attempts < 10) {
+      while (newQuestion.question === freshState.currentQuestion?.question && attempts < 10) {
         newQuestion = questionBank[Math.floor(Math.random() * questionBank.length)];
         attempts++;
       }
@@ -352,12 +392,16 @@ export const useGameStore = create<GameState>((set, get) => ({
       switch (type) {
         case 'shield':
           // Shield absorbs next damage
+          updates.activeShield = true;
+          console.log('🛡️ SHIELD ACTIVATED!');
           break;
         case 'double-damage':
           // Next attack deals 2x damage
+          updates.activeDoubleDamage = true;
+          console.log('⚔️ DOUBLE DAMAGE READY!');
           break;
-        case 'time-freeze':
-          // Freeze timer for current question
+        case 'vanish-options':
+          // Remove 2 wrong answers from current question
           break;
         case 'mega-heal':
           updates.player = {
@@ -378,6 +422,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   resetGame: () => {
+    // Stop all audio and start exploration music
+    audioManager.stopAll();
+    audioManager.playExplore();
+    
     set({
       player: {
         health: 100,
@@ -386,7 +434,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         isLocked: false,
       },
       enemies: [
-        { id: 'boss-server', health: 100, maxHealth: 100, position: [0, 0.5, -56], isDefeated: false, type: 'virus', isBoss: true, challengeType: 'time-attack', powerUp: 'time-freeze' },
+        { id: 'boss-server', health: 100, maxHealth: 100, position: [0, 0.5, -56], isDefeated: false, type: 'virus', isBoss: true, challengeType: 'time-attack', powerUp: 'vanish-options' },
         { id: 'server-enemy-1', health: 50, maxHealth: 50, position: [-8, 0.5, -52], isDefeated: false, type: 'glitch' },
         { id: 'server-enemy-2', health: 50, maxHealth: 50, position: [8, 0.5, -60], isDefeated: false, type: 'bug' },
         { id: 'boss-weapon', health: 100, maxHealth: 100, position: [0, 0.5, 50], isDefeated: false, type: 'bug', isBoss: true, challengeType: 'fill-blank', powerUp: 'double-damage' },
@@ -406,6 +454,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       enemiesDefeated: 0,
       isChampion: false,
       powerUps: [],
+      activeShield: false,
+      activeDoubleDamage: false,
     });
   },
 }));

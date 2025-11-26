@@ -19,10 +19,10 @@ const POWERUP_INFO = {
     description: 'Next attack deals 2x damage',
     color: 'red',
   },
-  'time-freeze': {
-    icon: '⏸️',
-    name: 'Time Freeze',
-    description: 'Stop timer for 10s',
+  'vanish-options': {
+    icon: '👁️',
+    name: 'Vanish Options',
+    description: 'Remove 2 wrong answers',
     color: 'blue',
   },
   'mega-heal': {
@@ -45,17 +45,21 @@ export function PowerUpDisplay() {
   if (powerUps.length === 0) return null;
 
   return (
-    <div className="fixed top-24 right-4 z-40">
-      <div className="bg-black/80 border-2 border-cyan-500 rounded-lg p-4 backdrop-blur-sm">
-        <h3 className="text-cyan-400 text-sm font-bold font-mono mb-3 flex items-center gap-2">
+    <div className="fixed top-32 right-4 z-50 max-w-xs">
+      <div className="bg-black/80 border-2 border-cyan-500 rounded-lg p-3 backdrop-blur-sm">
+        <h3 className="text-cyan-400 text-xs font-bold font-mono mb-2 flex items-center gap-2">
           <span>💪</span>
           <span>POWER-UPS</span>
         </h3>
         
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {powerUps.map((powerUp, index) => {
             const info = POWERUP_INFO[powerUp.type];
-            const canUse = !powerUp.used && (powerUp.type === 'mega-heal' || inBattle);
+            // vanish-options can only be used in battle, mega-heal anytime
+            const canUse = !powerUp.used && (
+              powerUp.type === 'mega-heal' || 
+              (inBattle && ['shield', 'double-damage', 'vanish-options'].includes(powerUp.type))
+            );
             
             return (
               <button
@@ -63,28 +67,34 @@ export function PowerUpDisplay() {
                 onClick={() => handleUsePowerUp(powerUp.type)}
                 disabled={!canUse}
                 className={`
-                  w-full p-3 rounded-lg border-2 transition-all
+                  w-full p-2 rounded border transition-all
                   ${powerUp.used 
-                    ? 'bg-gray-800/50 border-gray-600 opacity-50 cursor-not-allowed' 
-                    : `bg-${info.color}-900/30 border-${info.color}-500 hover:bg-${info.color}-800/50 hover:scale-105 cursor-pointer`
+                    ? 'bg-gray-800/50 border-gray-600 opacity-40 cursor-not-allowed' 
+                    : info.color === 'cyan' ? 'bg-cyan-900/30 border-cyan-500 hover:bg-cyan-800/50 hover:scale-105 cursor-pointer'
+                    : info.color === 'red' ? 'bg-red-900/30 border-red-500 hover:bg-red-800/50 hover:scale-105 cursor-pointer'
+                    : info.color === 'blue' ? 'bg-blue-900/30 border-blue-500 hover:bg-blue-800/50 hover:scale-105 cursor-pointer'
+                    : 'bg-green-900/30 border-green-500 hover:bg-green-800/50 hover:scale-105 cursor-pointer'
                   }
-                  ${!canUse && !powerUp.used ? 'opacity-60 cursor-not-allowed' : ''}
                 `}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl">{info.icon}</span>
-                  <div className="flex-1 text-left">
-                    <div className={`text-sm font-bold font-mono ${
-                      powerUp.used ? 'text-gray-500' : `text-${info.color}-400`
+                  <span className="text-lg">{info.icon}</span>
+                  <div className="flex-1 text-left min-w-0">
+                    <div className={`text-xs font-bold font-mono truncate ${
+                      powerUp.used ? 'text-gray-500' 
+                      : info.color === 'cyan' ? 'text-cyan-400'
+                      : info.color === 'red' ? 'text-red-400'
+                      : info.color === 'blue' ? 'text-blue-400'
+                      : 'text-green-400'
                     }`}>
                       {info.name}
                     </div>
-                    <div className="text-xs text-gray-400 font-mono">
+                    <div className="text-[10px] text-gray-400 font-mono truncate">
                       {info.description}
                     </div>
                   </div>
                   {powerUp.used && (
-                    <span className="text-xs text-red-500 font-bold font-mono">USED</span>
+                    <span className="text-[10px] text-red-500 font-bold font-mono">USED</span>
                   )}
                 </div>
               </button>
@@ -92,7 +102,7 @@ export function PowerUpDisplay() {
           })}
         </div>
         
-        <div className="mt-3 text-xs text-gray-400 font-mono text-center">
+        <div className="mt-2 text-[10px] text-gray-400 font-mono text-center">
           Click to use • Defeat bosses for more
         </div>
       </div>
